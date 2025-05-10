@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -105,7 +106,10 @@ public class MainActivity extends AppCompatActivity implements UserAdapter.OnUse
             @Override
             public void onResponse(@NonNull Call<List<User>> call, @NonNull Response<List<User>> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    adapter.setUsers(response.body());
+                    List<User> users = response.body();
+                    adapter.setUsers(users);
+                    findViewById(R.id.textEmptyState).setVisibility(
+                            users.isEmpty() ? View.VISIBLE : View.GONE);
                 } else {
                     Toast.makeText(MainActivity.this, "Error: " + response.code(), Toast.LENGTH_SHORT).show();
                 }
