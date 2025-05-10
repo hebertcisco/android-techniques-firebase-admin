@@ -1,101 +1,110 @@
 package com.example.nestjs_firebase_admin;
 
-import static com.google.firebase.messaging.Constants.TAG;
-
+import android.content.Intent;
 import android.os.Bundle;
+import android.widget.Toast;
 
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
-import com.google.android.material.snackbar.Snackbar;
-
-import androidx.annotation.NonNull;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
-import android.util.Log;
-import android.view.View;
+import com.example.nestjs_firebase_admin.adapter.UserAdapter;
+import com.example.nestjs_firebase_admin.api.RetrofitClient;
+import com.example.nestjs_firebase_admin.model.User;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
-import androidx.navigation.NavController;
-import androidx.navigation.Navigation;
-import androidx.navigation.ui.AppBarConfiguration;
-import androidx.navigation.ui.NavigationUI;
+import java.util.List;
 
-import com.example.nestjs_firebase_admin.databinding.ActivityMainBinding;
-import com.google.firebase.messaging.FirebaseMessaging;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
-import android.view.Menu;
-import android.view.MenuItem;
-
-public class MainActivity extends AppCompatActivity {
-
-    private AppBarConfiguration appBarConfiguration;
-    private ActivityMainBinding binding;
+public class MainActivity extends AppCompatActivity implements UserAdapter.OnUserClickListener {
+    private UserAdapter adapter;
+    private final ActivityResultLauncher<Intent> userFormLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (result.getResultCode() == RESULT_OK) {
+                    loadUsers();
+                }
+            });
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
 
-        binding = ActivityMainBinding.inflate(getLayoutInflater());
-        setContentView(binding.getRoot());
+        RecyclerView recyclerView = findViewById(R.id.recyclerView);
+        FloatingActionButton fabAdd = findViewById(R.id.fabAdd);
 
-        setSupportActionBar(binding.toolbar);
+        adapter = new UserAdapter(this);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        recyclerView.setAdapter(adapter);
 
-        NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_main);
-        appBarConfiguration = new AppBarConfiguration.Builder(navController.getGraph()).build();
-        NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
+        fabAdd.setOnClickListener(v -> openUserForm(null));
 
-        binding.fab.setOnClickListener(new View.OnClickListener() {
+        loadUsers();
+    }
+
+    private void loadUsers() {
+        RetrofitClient.getInstance().getApiService().getUsers().enqueue(new Callback<List<User>>() {
             @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+            public void onResponse(Call<List<User>> call, Response<List<User>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    adapter.setUsers(response.body());
+                } else {
+                    Toast.makeText(MainActivity.this, "Error: " + response.code(), Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<List<User>> call, Throwable t) {
+                Toast.makeText(MainActivity.this, "Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
-        FirebaseMessaging.getInstance().getToken()
-                .addOnCompleteListener(new OnCompleteListener<String>() {
-                    @Override
-                    public void onComplete(@NonNull Task<String> task) {
-                        if (!task.isSuccessful()) {
-                            Log.w(TAG, "Fetching FCM registration token failed", task.getException());
-                            return;
-                        }
-
-                        // Get new FCM registration token
-                        String token = task.getResult();
-                        Log.d(TAG, token);
-                        // Log and toast
-                        // String msg = getString(R.string.msg_token_fmt, token);
-                        // Log.d(TAG, msg);
-                        // Toast.makeText(MainActivity.this, msg, Toast.LENGTH_SHORT).show();
-                    }
-                });
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
+    private void openUserForm(User user) {
+        Intent intent = new Intent(this, UserFormActivity.class);
+        if (user != null) {
+            intent.putExtra(UserFormActivity.EXTRA_USER, user);
         }
-
-        return super.onOptionsItemSelected(item);
+        userFormLauncher.launch(intent);
     }
 
     @Override
-    public boolean onSupportNavigateUp() {
-        NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_main);
-        return NavigationUI.navigateUp(navController, appBarConfiguration)
-                || super.onSupportNavigateUp();
+    public void onEditClick(User user) {
+        openUserForm(user);
+    }
+
+    @Override
+    public void onDeleteClick(User user) {
+        new AlertDialog.Builder(this)
+                .setTitle("Delete User")
+                .setMessage("Are you sure you want to delete this user?")
+                .setPositiveButton("Yes", (dialog, which) -> deleteUser(user))
+                .setNegativeButton("No", null)
+                .show();
+    }
+
+    private void deleteUser(User user) {
+        RetrofitClient.getInstance().getApiService().deleteUser(user.getId()).enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(Call<Void> call, Response<Void> response) {
+                if (response.isSuccessful()) {
+                    loadUsers();
+                } else {
+                    Toast.makeText(MainActivity.this, "Error: " + response.code(), Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Void> call, Throwable t) {
+                Toast.makeText(MainActivity.this, "Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 }
