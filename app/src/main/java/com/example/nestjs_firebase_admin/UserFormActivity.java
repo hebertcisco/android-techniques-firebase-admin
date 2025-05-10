@@ -10,6 +10,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.example.nestjs_firebase_admin.api.RetrofitClient;
 import com.example.nestjs_firebase_admin.model.User;
 import com.google.android.material.textfield.TextInputEditText;
+import com.google.firebase.messaging.FirebaseMessaging;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -47,14 +48,23 @@ public class UserFormActivity extends AppCompatActivity {
         }
 
         if (user == null) {
-            createUser(name);
+            // Get FCM token for new users
+            FirebaseMessaging.getInstance().getToken()
+                    .addOnCompleteListener(task -> {
+                        if (!task.isSuccessful()) {
+                            Toast.makeText(UserFormActivity.this, "Failed to get FCM token", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                        String fcmToken = task.getResult();
+                        createUser(name, fcmToken);
+                    });
         } else {
             updateUser(name);
         }
     }
 
-    private void createUser(String name) {
-        User newUser = new User(name);
+    private void createUser(String name, String fcmToken) {
+        User newUser = new User(name, fcmToken);
         RetrofitClient.getInstance().getApiService().createUser(newUser).enqueue(new Callback<User>() {
             @Override
             public void onResponse(Call<User> call, Response<User> response) {

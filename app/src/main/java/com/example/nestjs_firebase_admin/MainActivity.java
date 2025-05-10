@@ -6,6 +6,7 @@ import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -52,7 +53,7 @@ public class MainActivity extends AppCompatActivity implements UserAdapter.OnUse
     private void loadUsers() {
         RetrofitClient.getInstance().getApiService().getUsers().enqueue(new Callback<List<User>>() {
             @Override
-            public void onResponse(Call<List<User>> call, Response<List<User>> response) {
+            public void onResponse(@NonNull Call<List<User>> call, @NonNull Response<List<User>> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     adapter.setUsers(response.body());
                 } else {
@@ -61,7 +62,7 @@ public class MainActivity extends AppCompatActivity implements UserAdapter.OnUse
             }
 
             @Override
-            public void onFailure(Call<List<User>> call, Throwable t) {
+            public void onFailure(@NonNull Call<List<User>> call, @NonNull Throwable t) {
                 Toast.makeText(MainActivity.this, "Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
@@ -93,7 +94,7 @@ public class MainActivity extends AppCompatActivity implements UserAdapter.OnUse
     private void deleteUser(User user) {
         RetrofitClient.getInstance().getApiService().deleteUser(user.getId()).enqueue(new Callback<Void>() {
             @Override
-            public void onResponse(Call<Void> call, Response<Void> response) {
+            public void onResponse(@NonNull Call<Void> call, @NonNull Response<Void> response) {
                 if (response.isSuccessful()) {
                     loadUsers();
                 } else {
@@ -102,7 +103,7 @@ public class MainActivity extends AppCompatActivity implements UserAdapter.OnUse
             }
 
             @Override
-            public void onFailure(Call<Void> call, Throwable t) {
+            public void onFailure(@NonNull Call<Void> call, @NonNull Throwable t) {
                 Toast.makeText(MainActivity.this, "Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
