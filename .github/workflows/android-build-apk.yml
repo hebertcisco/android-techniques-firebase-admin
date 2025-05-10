@@ -63,6 +63,10 @@ jobs:
         run: |
           echo "API_BASE_URL=${{ secrets.API_BASE_URL }}" >> app/local.properties
 
+      - name: 🔑 Create google-services.json
+        run: |
+          echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > app/google-services.json
+          
       - name: 🛠️ Build Release APK
         run: |
           ./gradlew assembleRelease --no-daemon
