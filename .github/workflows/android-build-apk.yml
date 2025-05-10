@@ -1,0 +1,96 @@
+name: 🚀 Android Release Build
+
+on:
+  workflow_dispatch: # Manually trigger a workflow_dispatch event
+  pull_request:
+    branches:
+      - 'main'
+    types:
+      - closed
+
+jobs:
+  build-develop:
+    name: 🏗️ Build Android APK
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: ⚡️ Setup Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: "22.x"
+
+      - name: ☕️ Setup Java Development Kit
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'gradle'
+
+      - name: 📦 Get Yarn Cache Directory
+        id: yarn-cache-dir-path
+        run: echo "::set-output name=dir::$(yarn cache dir)"
+
+      - name: 💾 Cache Node Modules
+        uses: actions/cache@v4
+        id: yarn-cache
+        with:
+          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-yarn-
+
+      - name: 📚 Install Dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: 💾 Cache Gradle Dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.gradle/caches
+          key: ${{ runner.os }}-gradle-caches-${{ hashFiles('gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-caches-
+
+      - name: 🏷️ Get Release Tag
+        id: var
+        run: echo ::set-output name=tag::${GITHUB_REF#refs/*/}
+
+      - name: 🔧 Make Gradlew Executable
+        run: chmod +x ./gradlew
+
+      - name: 🛠️ Build Release APK
+        run: |
+          ./gradlew assembleRelease --no-daemon
+
+      - name: 📦 Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-builded
+          path: app/build/outputs/apk/release/app-release.apk
+
+      - name: 📋 Get Android Version
+        run: |
+          VERSION_NAME=$(awk -F'"' '/versionName/ {print $2}' ./app/build.gradle)
+          echo "ANDROID_VERSION_NAME=$VERSION_NAME" >> $GITHUB_ENV
+        id: out_android_version
+
+      - name: 🏷️ Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        with:
+          tag_name: v${{ env.ANDROID_VERSION_NAME }}-apk-${{ steps.var.outputs.tag }}
+          release_name: Release v${{ env.ANDROID_VERSION_NAME }}-apk-${{ steps.var.outputs.tag }}
+          body: 'Release v${{ env.ANDROID_VERSION_NAME }}-apk'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+
+      - name: ⬆️ Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: app/build/outputs/apk/release/app-release.apk
+          asset_name: app-debug-builded-${{ steps.var.outputs.tag }}.apk
+          asset_content_type: application/zip
