@@ -39,6 +39,11 @@
             android:label="User Form"
             android:parentActivityName=".MainActivity" />
 
+        <activity
+            android:name=".NotificationDialogActivity"
+            android:theme="@style/Theme.Transparent"
+            android:exported="false" />
+
         <service
             android:name=".service.CustomFirebaseMessagingService"
             android:exported="false">
