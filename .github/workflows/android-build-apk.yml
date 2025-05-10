@@ -80,7 +80,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: app-release-builded
-          path: app/build/outputs/apk/release/app-release.apk
+          path: app/build/outputs/apk/release/app-release-unsigned.apk
           if-no-files-found: error
 
       - name: 📋 Get Android Version
@@ -105,6 +105,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: app/build/outputs/apk/release/app-release.apk
+          asset_path: app/build/outputs/apk/release/app-release-unsigned.apk
           asset_name: app-release-${{ steps.var.outputs.tag }}.apk
           asset_content_type: application/vnd.android.package-archive
