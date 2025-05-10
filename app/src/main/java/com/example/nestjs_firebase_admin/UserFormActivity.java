@@ -2,6 +2,7 @@ package com.example.nestjs_firebase_admin;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.widget.Button;
 import android.widget.Toast;
 
@@ -56,15 +57,16 @@ public class UserFormActivity extends AppCompatActivity {
                             return;
                         }
                         String fcmToken = task.getResult();
-                        createUser(name, fcmToken);
+                        String deviceId = Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
+                        createUser(name, fcmToken, deviceId);
                     });
         } else {
             updateUser(name);
         }
     }
 
-    private void createUser(String name, String fcmToken) {
-        User newUser = new User(name, fcmToken);
+    private void createUser(String name, String fcmToken, String deviceId) {
+        User newUser = new User(name, fcmToken, deviceId);
         RetrofitClient.getInstance().getApiService().createUser(newUser).enqueue(new Callback<User>() {
             @Override
             public void onResponse(Call<User> call, Response<User> response) {
