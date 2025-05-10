@@ -3,6 +3,14 @@ plugins {
     id 'com.google.gms.google-services'
 }
 
+def localProperties = new Properties()
+def localPropertiesFile = rootProject.file('local.properties')
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.withReader('UTF-8') { reader ->
+        localProperties.load(reader)
+    }
+}
+
 android {
     namespace 'com.example.nestjs_firebase_admin'
     compileSdk 35
@@ -15,6 +23,8 @@ android {
         versionName "1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField "String", "API_BASE_URL", "\"${localProperties.getProperty('API_BASE_URL', 'http://localhost:3000/')}\""
     }
 
     buildTypes {
@@ -29,6 +39,7 @@ android {
     }
     buildFeatures {
         viewBinding true
+        buildConfig true
     }
 }
 
