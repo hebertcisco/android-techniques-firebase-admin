@@ -84,7 +84,6 @@ public class MainActivity extends AppCompatActivity implements UserAdapter.OnUse
                         return;
                     }
                     String token = task.getResult();
-                    // You can store this token or send it to your server if needed
                 });
     }
 
@@ -102,9 +101,16 @@ public class MainActivity extends AppCompatActivity implements UserAdapter.OnUse
     }
 
     private void loadUsers() {
+        findViewById(R.id.progressBar).setVisibility(View.VISIBLE);
+        findViewById(R.id.textEmptyState).setVisibility(View.GONE);
+        findViewById(R.id.recyclerView).setVisibility(View.GONE);
+
         RetrofitClient.getInstance().getApiService().getUsers().enqueue(new Callback<List<User>>() {
             @Override
             public void onResponse(@NonNull Call<List<User>> call, @NonNull Response<List<User>> response) {
+                findViewById(R.id.progressBar).setVisibility(View.GONE);
+                findViewById(R.id.recyclerView).setVisibility(View.VISIBLE);
+
                 if (response.isSuccessful() && response.body() != null) {
                     List<User> users = response.body();
                     adapter.setUsers(users);
@@ -117,6 +123,8 @@ public class MainActivity extends AppCompatActivity implements UserAdapter.OnUse
 
             @Override
             public void onFailure(@NonNull Call<List<User>> call, @NonNull Throwable t) {
+                findViewById(R.id.progressBar).setVisibility(View.GONE);
+                findViewById(R.id.recyclerView).setVisibility(View.VISIBLE);
                 Toast.makeText(MainActivity.this, "Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });

@@ -31,15 +31,12 @@ public class CustomFirebaseMessagingService extends FirebaseMessagingService {
     public void onMessageReceived(@NonNull RemoteMessage message) {
         Log.d(TAG, "From: " + message.getFrom());
 
-        // Check if message contains a notification payload
         if (message.getNotification() != null) {
             String title = message.getNotification().getTitle();
             String body = message.getNotification().getBody();
 
-            // Show notification in foreground
             showNotification(title, body);
 
-            // Show dialog with notification content
             showNotificationDialog(title, body);
         }
     }
