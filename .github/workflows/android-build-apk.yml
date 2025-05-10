@@ -59,6 +59,10 @@ jobs:
       - name: 🔧 Make Gradlew Executable
         run: chmod +x ./gradlew
 
+      - name: 🔐 Update local.properties with API URL
+        run: |
+          echo "API_BASE_URL=${{ secrets.API_BASE_URL }}" >> app/local.properties
+
       - name: 🛠️ Build Release APK
         run: |
           ./gradlew assembleRelease --no-daemon
