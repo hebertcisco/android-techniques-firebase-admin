@@ -69,13 +69,19 @@ jobs:
           
       - name: 🛠️ Build Release APK
         run: |
-          ./gradlew assembleRelease --no-daemon
-
+          ./gradlew clean
+          ./gradlew assembleRelease --no-daemon --stacktrace
+          
+      - name: 🔍 List Build Output Directory
+        run: |
+          ls -la app/build/outputs/apk/release/
+          
       - name: 📦 Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: app-release-builded
           path: app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error
 
       - name: 📋 Get Android Version
         run: |
@@ -100,5 +106,5 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: app/build/outputs/apk/release/app-release.apk
-          asset_name: app-debug-builded-${{ steps.var.outputs.tag }}.apk
-          asset_content_type: application/zip
+          asset_name: app-release-${{ steps.var.outputs.tag }}.apk
+          asset_content_type: application/vnd.android.package-archive
