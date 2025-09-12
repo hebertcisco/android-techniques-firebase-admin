@@ -4,7 +4,7 @@ buildscript {
         minSdkVersion = 24
         compileSdkVersion = 35
         targetSdkVersion = 34
-        ndkVersion = "26.1.10909125"
+        ndkVersion = "28.0.13004123"
         kotlinVersion = "1.9.24"
     }
     dependencies {
@@ -12,6 +12,6 @@ buildscript {
     }
 }// Top-level build file where you can add configuration options common to all sub-projects/modules.
 plugins {
-    id 'com.android.application' version '8.2.2' apply false
-    id 'com.android.library' version '8.2.2' apply false
+    id 'com.android.application' version '8.12.3' apply false
+    id 'com.android.library' version '8.12.3' apply false
 }
